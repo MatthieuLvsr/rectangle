@@ -1,9 +1,32 @@
 import { useRef, useState } from "react";
 import { Sidebar } from "./Sidebar"
 import { Rectangle } from "./Rectangle";
+import { toast, useToast } from "./ui/use-toast";
+import { Toaster } from "./ui/toaster";
 
 let index = 0
-const colors = ["red", "blue", "green", "yellow", "orange"]; // Liste des couleurs disponibles
+const colors = [
+  "red",
+  "blue",
+  "green",
+  "orange",
+  "yellow",
+  "purple",
+  "pink",
+  "teal",
+  "brown",
+  "gray",
+  "black",
+  "white",
+  "cyan",
+  "magenta",
+  "lime",
+  "indigo",
+  "silver",
+  "gold",
+  "olive",
+  "navy",
+];
 
 // const randomColor = colors[Math.floor(Math.random() * colors.length)]; // Choix d'une couleur au hasard
 const randomColor = () => {
@@ -19,25 +42,91 @@ export interface IRect {
   height: number;
   color: string;
 }
-const sample: IRect = {
-    id:index++,
-    name: "New Rectangle",
-    left: 0,
-    top: 0,
-    width: 100,
-    height: 100,
-    color: randomColor()
-  };
+interface IInput {
+  inputs: IInputComponent[];
+}
 
+interface IInputComponent {
+  name: string;
+  rectangle: Rectangle;
+}
+
+interface Rectangle {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
 
 export const Main = ()=>{
   const [rectangles, setRectangles] = useState<IRect[]>([]);
   const imageRef = useRef<HTMLDivElement>(null)
 
+  const checkName = (name: string): string => {
+    let newName = name;
+    let counter = 2;
+  
+    // Vérifie si le nom existe déjà dans la liste
+    let nameExists = rectangles.some(rectangle => rectangle.name === newName);
+  
+    // Si le nom existe déjà, incrémente le nom avec un nombre
+    while (nameExists) {
+      // Vérifie si le nom se termine déjà par un nombre
+      const endsWithNumber = /\d+$/.test(newName);
+  
+      if (endsWithNumber) {
+        // Si le nom se termine par un nombre, incrémente le nombre
+        newName = newName.replace(/\d+$/, counter.toString());
+      } else {
+        // Si le nom ne se termine pas par un nombre, ajoute "2"
+        newName = newName + "2";
+      }
+  
+      // Vérifie à nouveau si le nom existe déjà
+      nameExists = rectangles.some(rectangle => rectangle.name === newName);
+  
+      counter++;
+    }
+  
+    return newName;
+  };
+  const recognize = () => { 
+    const input:IInput={
+      inputs: []
+    }
+    rectangles.forEach(rectangle => {
+      const inputComponent: IInputComponent = {
+        name: rectangle.name,
+        rectangle: {
+          left: rectangle.left,
+          top: rectangle.top,
+          width: rectangle.width,
+          height: rectangle.height
+        }
+      };
+      input.inputs.push(inputComponent);
+    });
+    toast({
+      title: "You submitted the following values:",
+      description: (
+        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
+          <code className="text-white">{JSON.stringify(input, null, 2)}</code>
+        </pre>
+      ),
+    })
+
+    // TODO : Axios.Post(url_du_service)
+  }
+
+
+  const fulltext = () => {
+    // TODO : Axios.Post(url_du_service)
+  }
+
   const handleAdd = () => {
     const rectangle: IRect = {
       id: index++,
-      name: "New Rectangle",
+      name: checkName("New Recognition"),
       left: 0,
       top: 0,
       width: 100,
@@ -78,21 +167,25 @@ export const Main = ()=>{
         </header>
         <main className="flex-1 flex flex-col gap-4 p-4 md:gap-8 md:p-6">
           <div className="flex flex-row">
-            <Sidebar rectangles={rectangles} handleAdd={handleAdd}/>
+            <Sidebar colors={colors} checkName={checkName} handleRecognize={recognize} rectangles={rectangles} handleAdd={handleAdd} updateRect={updateRect}/>
             <div className="flex flex-col gap-10 items-center justify-center">
               <h1 className="font-semibold text-lg md:text-2xl text-center">Product Name</h1>
-              <div 
-                ref={imageRef}
-                className="rounded-lg"
-                style={{
-                  width:1000,
-                  height:400,
-                  aspectRatio: "1000/400",
-                  objectFit: "cover",
-                  backgroundImage:"url(/test.png)",
-                  position:"relative"
-                }}
+              <div
+              ref={imageRef}
+              style={{
+                position:"relative"
+              }}
               >
+                <img
+                className="rounded-lg"
+                src="./test.png"
+                width={1000}
+                style={{
+                  // aspectRatio: "1000/400",
+                  objectFit: "cover",
+                  // position:"absolute"
+                }}
+              />
               {rectangles.map((r)=>(
                 <Rectangle image={imageRef.current} key={r.id} rectangle={r} update={updateRect}/>
               ))}
@@ -101,6 +194,7 @@ export const Main = ()=>{
           </div>
         </main>
       </div>
+      <Toaster/>
     </div>
   )
 }
