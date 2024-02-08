@@ -1,10 +1,11 @@
 import { useRef, useState } from "react";
-import { Sidebar } from "./Sidebar"
+import { Sidebar } from "./Sidebar";
 import { Rectangle } from "./Rectangle";
 import { toast, useToast } from "./ui/use-toast";
 import { Toaster } from "./ui/toaster";
+import { InputFile } from "./InputFile";
 
-let index = 0
+let index = 0;
 const colors = [
   "red",
   "blue",
@@ -30,11 +31,11 @@ const colors = [
 
 // const randomColor = colors[Math.floor(Math.random() * colors.length)]; // Choix d'une couleur au hasard
 const randomColor = () => {
-  return colors[Math.floor(Math.random()* colors.length)]
-}
+  return colors[Math.floor(Math.random() * colors.length)];
+};
 
 export interface IRect {
-  id:number;
+  id: number;
   name: string;
   left: number;
   top: number;
@@ -58,22 +59,24 @@ interface Rectangle {
   height: number;
 }
 
-export const Main = ()=>{
+export const Main = () => {
   const [rectangles, setRectangles] = useState<IRect[]>([]);
-  const imageRef = useRef<HTMLDivElement>(null)
+  const [imgLoaded,setImgLoaded] = useState(false)
+  const [img,setImg] = useState<{name:string}|null>(null)
+  const imageRef = useRef<HTMLDivElement>(null);
 
   const checkName = (name: string): string => {
     let newName = name;
     let counter = 2;
-  
+
     // Vérifie si le nom existe déjà dans la liste
-    let nameExists = rectangles.some(rectangle => rectangle.name === newName);
-  
+    let nameExists = rectangles.some((rectangle) => rectangle.name === newName);
+
     // Si le nom existe déjà, incrémente le nom avec un nombre
     while (nameExists) {
       // Vérifie si le nom se termine déjà par un nombre
       const endsWithNumber = /\d+$/.test(newName);
-  
+
       if (endsWithNumber) {
         // Si le nom se termine par un nombre, incrémente le nombre
         newName = newName.replace(/\d+$/, counter.toString());
@@ -81,28 +84,28 @@ export const Main = ()=>{
         // Si le nom ne se termine pas par un nombre, ajoute "2"
         newName = newName + "2";
       }
-  
+
       // Vérifie à nouveau si le nom existe déjà
-      nameExists = rectangles.some(rectangle => rectangle.name === newName);
-  
+      nameExists = rectangles.some((rectangle) => rectangle.name === newName);
+
       counter++;
     }
-  
+
     return newName;
   };
-  const recognize = () => { 
-    const input:IInput={
-      inputs: []
-    }
-    rectangles.forEach(rectangle => {
+  const recognize = () => {
+    const input: IInput = {
+      inputs: [],
+    };
+    rectangles.forEach((rectangle) => {
       const inputComponent: IInputComponent = {
         name: rectangle.name,
         rectangle: {
           left: rectangle.left,
           top: rectangle.top,
           width: rectangle.width,
-          height: rectangle.height
-        }
+          height: rectangle.height,
+        },
       };
       input.inputs.push(inputComponent);
     });
@@ -113,14 +116,19 @@ export const Main = ()=>{
           <code className="text-white">{JSON.stringify(input, null, 2)}</code>
         </pre>
       ),
-    })
+    });
 
     // TODO : Axios.Post(url_du_service)
-  }
-
+  };
 
   const fulltext = () => {
     // TODO : Axios.Post(url_du_service)
+  };
+
+  const handleDestruct = () => {
+    setImg(null)
+    setImgLoaded(false)
+    setRectangles([])
   }
 
   const handleAdd = () => {
@@ -131,31 +139,31 @@ export const Main = ()=>{
       top: 0,
       width: 100,
       height: 100,
-      color: randomColor()
+      color: randomColor(),
     };
     const newList = [...rectangles];
     newList.push(rectangle);
-    setRectangles(newList);    
+    setRectangles(newList);
   };
   const updateRect = (rectangle: IRect) => {
-    setRectangles(currentRectangles => {
+    setRectangles((currentRectangles) => {
       // Trouver l'index du rectangle à mettre à jour dans le tableau actuel
-      const index = currentRectangles.findIndex(r => r.id === rectangle.id);
-  
+      const index = currentRectangles.findIndex((r) => r.id === rectangle.id);
+
       // Si le rectangle existe (index !== -1), procéder à la mise à jour
       if (index !== -1) {
         // Créer une nouvelle copie du tableau en remplaçant l'élément à l'index trouvé
         const newRectangles = [...currentRectangles];
         newRectangles[index] = rectangle; // Met à jour l'élément avec les nouvelles données
-  
+
         return newRectangles; // Retourne le nouveau tableau mis à jour
       }
-  
+
       // Si l'élément n'est pas trouvé, retourne le tableau actuel sans modification
       return currentRectangles;
     });
   };
-  
+
   return (
     <div className="flex min-h-screen bg-gray-100/40 dark:bg-gray-800/40">
       <div className="flex-1 flex flex-col min-h-screen">
@@ -163,38 +171,59 @@ export const Main = ()=>{
           <a className="lg:hidden" href="#">
             <span className="sr-only">Home</span>
           </a>
-          <h1 className="font-semibold text-lg md:text-2xl">Products</h1>
+          <h1 className="font-semibold text-lg md:text-2xl">Recognition</h1>
         </header>
         <main className="flex-1 flex flex-col gap-4 p-4 md:gap-8 md:p-6">
           <div className="flex flex-row">
-            <Sidebar colors={colors} checkName={checkName} handleRecognize={recognize} rectangles={rectangles} handleAdd={handleAdd} updateRect={updateRect}/>
+            <Sidebar
+              active={imgLoaded}
+              handleFulltext={fulltext}
+              colors={colors}
+              checkName={checkName}
+              handleDestruct={handleDestruct}
+              handleRecognize={recognize}
+              imgLoaded={imgLoaded}
+              rectangles={rectangles}
+              handleAdd={handleAdd}
+              updateRect={updateRect}
+            />
             <div className="flex flex-col gap-10 items-center justify-center">
-              <h1 className="font-semibold text-lg md:text-2xl text-center">Product Name</h1>
+              <h1 className="font-semibold text-lg md:text-2xl text-center">
+                {imgLoaded && img ? img.name : "Product Name"}
+              </h1>
               <div
-              ref={imageRef}
-              style={{
-                position:"relative"
-              }}
+                ref={imageRef}
+                style={{
+                  position: "relative",
+                }}
               >
+                {imgLoaded ?
                 <img
                 className="rounded-lg"
                 src="./test.png"
                 width={1000}
                 style={{
-                  // aspectRatio: "1000/400",
                   objectFit: "cover",
-                  // position:"absolute"
                 }}
               />
-              {rectangles.map((r)=>(
-                <Rectangle image={imageRef.current} key={r.id} rectangle={r} update={updateRect}/>
-              ))}
+                :
+                <InputFile setImage={setImg} imageUploaded={setImgLoaded}/>
+                }
+                
+                {rectangles.map((r) => (
+                  <Rectangle
+                    image={imageRef.current}
+                    key={r.id}
+                    rectangle={r}
+                    update={updateRect}
+                  />
+                ))}
               </div>
             </div>
           </div>
         </main>
       </div>
-      <Toaster/>
+      <Toaster />
     </div>
-  )
-}
+  );
+};

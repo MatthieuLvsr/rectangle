@@ -8,9 +8,13 @@ import { faCirclePlus, faMagnifyingGlass, faParagraph } from "@fortawesome/free-
 export interface ISidebarEntry{
     rectangles:IRect[]
     colors:string[]
+    active:boolean
+    imgLoaded:boolean
     handleAdd:()=>void
     updateRect:(rectangle:IRect)=>void
     handleRecognize:()=>void
+    handleFulltext:()=>void
+    handleDestruct:()=>void
     checkName:(name:string)=>string
 }
 
@@ -24,6 +28,7 @@ export const Sidebar = (props:ISidebarEntry) => {
             <SideElement colors={props.colors} checkName={props.checkName} key={r.id} rectangle={r} updateRect={props.updateRect} />
           ))}
           <Button
+          disabled={!props.active}
             onClick={props.handleAdd}
             className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50"
             variant="outline"
@@ -32,6 +37,7 @@ export const Sidebar = (props:ISidebarEntry) => {
           </Button>
           {props.rectangles.length > 0 ?
           <Button
+            disabled={!props.active}
             onClick={props.handleRecognize}
             className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50"
             variant="outline"
@@ -41,11 +47,19 @@ export const Sidebar = (props:ISidebarEntry) => {
           :
           <></>}
           <Button
-            onClick={props.handleRecognize}
+            disabled={!props.active}
+            onClick={props.handleFulltext}
             className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50"
             variant="outline"
           >
             Fulltext <FontAwesomeIcon icon={faParagraph}/>
+          </Button>
+          <Button
+          disabled={!props.imgLoaded}
+          onClick={props.handleDestruct}
+          variant="destructive"
+          >
+            Delete
           </Button>
         </nav>
       </div>
